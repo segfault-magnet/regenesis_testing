@@ -12,4 +12,4 @@ echo "Building forc"
 (cd some_contract && forc build)
 echo "Running tests"
 PATH="./fuel-core/target/debug/:$PATH"
-exec cargo test
+exec cargo test -- --nocapture
