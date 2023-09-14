@@ -7,7 +7,7 @@ if [[ $num_files == "1" ]]; then
 fi
 
 echo "Building fuel-core"
-(cd fuel-core && cargo xtask build)
+(cd fuel-core && cargo run --bin xtask build)
 echo "Building forc"
 (cd some_contract && forc build)
 echo "Running tests"
