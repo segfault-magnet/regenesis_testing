@@ -2,3 +2,4 @@
 fuel_db
 Cargo.lock
 **Forc.lock
+snapshot.json

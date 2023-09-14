@@ -4,7 +4,7 @@
   "initial_state": {
     "coins": [
       {
-        "tx_id": "0x07503296960e46972731ada78a351de45f62cbb5632e1ccfdd0c8220b864afe7",
+        "tx_id": "0x600936d1b3045aaa0cd06ae8dda6801fcc790754ab12bf7582d4a731dfa554d7",
         "output_index": "0x00",
         "tx_pointer_block_height": "0x00000000",
         "tx_pointer_tx_idx": "0x0000",
@@ -14,7 +14,7 @@
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0x4a817dba71deb3683fbe4174bb1e9a329996de57f8e2d82a57013abc1190d08b",
+        "tx_id": "0x78e58de51966fc89aa321e79524b1a768966c38d6b8db9f7376dcb3e6781730a",
         "output_index": "0x00",
         "tx_pointer_block_height": "0x00000000",
         "tx_pointer_tx_idx": "0x0000",
@@ -24,17 +24,37 @@
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0x5d121ca9321aa833f341be3e111fef8fa16a2d3e55ca7c05fe93350968fdec12",
-        "output_index": "0x01",
-        "tx_pointer_block_height": "0x00000003",
-        "tx_pointer_tx_idx": "0x0001",
+        "tx_id": "0x7ca3b11324714180f42b9935ecc856aa89849150362d2ba5c402cc678d84bf96",
+        "output_index": "0x00",
+        "tx_pointer_block_height": "0x00000000",
+        "tx_pointer_tx_idx": "0x0000",
         "maturity": "0x00000000",
         "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
         "amount": "0x00000000000186a0",
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0x7ea8b0a7bd1a5dfc7c65ddcd57cca1a517499f74e2259650988b71d56d478667",
+        "tx_id": "0x86914626f3195723fa59be564c7b94866d972b403e6f2bbd620b700cd03d90a7",
+        "output_index": "0x00",
+        "tx_pointer_block_height": "0x00000000",
+        "tx_pointer_tx_idx": "0x0000",
+        "maturity": "0x00000000",
+        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
+        "amount": "0x00000000000186a0",
+        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "tx_id": "0xa3cbcd4e900e2272ca2a07acff350e1c868884478a47f7e45d0cc7d155424212",
+        "output_index": "0x00",
+        "tx_pointer_block_height": "0x00000000",
+        "tx_pointer_tx_idx": "0x0000",
+        "maturity": "0x00000000",
+        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
+        "amount": "0x00000000000186a0",
+        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "tx_id": "0xadfcaad08d41a5939a1b031eb9852653e4b0ec6a394c36c9a360bf91c8d2ac80",
         "output_index": "0x01",
         "tx_pointer_block_height": "0x00000001",
         "tx_pointer_tx_idx": "0x0001",
@@ -44,7 +64,17 @@
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0x80c34db197e77ccd3d7729df5b685f4f180ac73fe25be6c3b447c5e59bf6cad0",
+        "tx_id": "0xbdf72215a1ab103cc9ab4be940b6949b3d455b3bdc3c1cfe57ae1c102a633b88",
+        "output_index": "0x01",
+        "tx_pointer_block_height": "0x00000003",
+        "tx_pointer_tx_idx": "0x0001",
+        "maturity": "0x00000000",
+        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
+        "amount": "0x00000000000186a0",
+        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "tx_id": "0xcf6f3d47d9df2ace023752dad68ef9e8e746a9f147a5a3935186fb6c10824d40",
         "output_index": "0x00",
         "tx_pointer_block_height": "0x00000000",
         "tx_pointer_tx_idx": "0x0000",
@@ -54,17 +84,7 @@
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0xb375c26b85295d7a66f6c09eef66d87b4b06be114993fc32411741c4515efe64",
-        "output_index": "0x00",
-        "tx_pointer_block_height": "0x00000000",
-        "tx_pointer_tx_idx": "0x0000",
-        "maturity": "0x00000000",
-        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
-        "amount": "0x00000000000186a0",
-        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
-      },
-      {
-        "tx_id": "0xc1f76b5d5e94f74db64eb274b3bc32b21d0de47382023c394e10d8d15bedaa52",
+        "tx_id": "0xdc74ab7fb8c2c7c1bb0e0ddc1cd1750d0375c6e44b3616eb9c1f773b3f7d0d58",
         "output_index": "0x01",
         "tx_pointer_block_height": "0x00000002",
         "tx_pointer_tx_idx": "0x0001",
@@ -74,27 +94,7 @@
         "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "tx_id": "0xdc32626e0d5f4c0098becea74142a75be4243c1bbd412cfd437e5a993fb2bf7b",
-        "output_index": "0x00",
-        "tx_pointer_block_height": "0x00000000",
-        "tx_pointer_tx_idx": "0x0000",
-        "maturity": "0x00000000",
-        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
-        "amount": "0x00000000000186a0",
-        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
-      },
-      {
-        "tx_id": "0xfaf75a03ea3c09dccf1f292df15a4ba38cc35ca0fd60b5fba09806ca4bc9cc5e",
-        "output_index": "0x00",
-        "tx_pointer_block_height": "0x00000000",
-        "tx_pointer_tx_idx": "0x0000",
-        "maturity": "0x00000000",
-        "owner": "0x5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958",
-        "amount": "0x00000000000186a0",
-        "asset_id": "0x0000000000000000000000000000000000000000000000000000000000000000"
-      },
-      {
-        "tx_id": "0xff6a135efcb8d78fd5a20f24a2b0517ac8fc2496f5831555c9a7a3d0255686d5",
+        "tx_id": "0xf3c99023c9afbb723b3c397a4bc871d375d9bbc83db45732c2716771a445998e",
         "output_index": "0x00",
         "tx_pointer_block_height": "0x00000000",
         "tx_pointer_tx_idx": "0x0000",
@@ -121,7 +121,7 @@
             "0x0000000000000000"
           ]
         ],
-        "tx_id": "0x5d121ca9321aa833f341be3e111fef8fa16a2d3e55ca7c05fe93350968fdec12",
+        "tx_id": "0xbdf72215a1ab103cc9ab4be940b6949b3d455b3bdc3c1cfe57ae1c102a633b88",
         "output_index": "0x00",
         "tx_pointer_block_height": "0x00000003",
         "tx_pointer_tx_idx": "0x0001"
