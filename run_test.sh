@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-num_files="$(find fuel-core | wc -l)"
+num_files="$(find fuel-core | wc -l | tr -d '[[:space:]]')"
 
 if [[ $num_files == "1" ]]; then
 	echo "Be sure to checkout the 'fuel-core' submodule: git submodule update --init --recursive"
@@ -7,7 +7,7 @@ if [[ $num_files == "1" ]]; then
 fi
 
 echo "Building fuel-core"
-(cd fuel-core && cargo run --bin xtask build)
+(cd fuel-core && cargo xtask build)
 echo "Building forc"
 (cd some_contract && forc build)
 echo "Running tests"
