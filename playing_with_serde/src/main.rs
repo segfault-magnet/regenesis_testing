@@ -22,84 +22,6 @@ struct StateConfigVisitor {
     callback: EventHandler,
 }
 
-struct CoinDeser {
-    callback: EventHandler,
-}
-
-impl<'de> DeserializeSeed<'de> for CoinDeser {
-    type Value = ();
-
-    fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_seq(CoinVisitor {
-            callback: self.callback,
-        })
-    }
-}
-
-struct CoinVisitor {
-    callback: EventHandler,
-}
-impl<'de> Visitor<'de> for CoinVisitor {
-    type Value = ();
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "CoinVisitor")
-    }
-
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where
-        A: SeqAccess<'de>,
-    {
-        while let Some(coin) = seq.next_element::<CoinConfig>()? {
-            self.callback.process(Event::CoinConfig(coin))
-        }
-
-        Ok(())
-    }
-}
-
-struct MessageDeser {
-    callback: EventHandler,
-}
-
-impl<'de> DeserializeSeed<'de> for MessageDeser {
-    type Value = ();
-
-    fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_seq(MessageVisitor {
-            callback: self.callback,
-        })
-    }
-}
-
-struct MessageVisitor {
-    callback: EventHandler,
-}
-impl<'de> Visitor<'de> for MessageVisitor {
-    type Value = ();
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "MessageVisitor")
-    }
-
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where
-        A: SeqAccess<'de>,
-    {
-        while let Some(message) = seq.next_element::<MessageConfig>()? {
-            self.callback.process(Event::MessageConfig(message))
-        }
-
-        Ok(())
-    }
-}
-
 impl<'de> Visitor<'de> for StateConfigVisitor {
     type Value = ();
 
@@ -113,18 +35,24 @@ impl<'de> Visitor<'de> for StateConfigVisitor {
         while let Some(key) = map.next_key::<String>().unwrap() {
             match key.as_str() {
                 "coins" => {
-                    map.next_value_seed(CoinDeser {
-                        callback: self.callback.clone(),
+                    map.next_value_seed(SeqDeserializator {
+                        visitor: CoinConfigVisitor {
+                            callback: self.callback.clone(),
+                        },
                     })?;
                 }
                 "contracts" => {
-                    map.next_value_seed(ContractDeser {
-                        callback: self.callback.clone(),
+                    map.next_value_seed(SeqDeserializator {
+                        visitor: ContractConfigVisitor {
+                            callback: self.callback.clone(),
+                        },
                     })?;
                 }
                 "messages" => {
-                    map.next_value_seed(MessageDeser {
-                        callback: self.callback.clone(),
+                    map.next_value_seed(SeqDeserializator {
+                        visitor: MessageConfigVisitor {
+                            callback: self.callback.clone(),
+                        },
                     })?;
                 }
                 "height" => {
@@ -141,44 +69,53 @@ impl<'de> Visitor<'de> for StateConfigVisitor {
     }
 }
 
-struct ContractDeser {
-    callback: EventHandler,
+struct SeqDeserializator<T> {
+    visitor: T,
 }
 
-impl<'de> DeserializeSeed<'de> for ContractDeser {
-    type Value = ();
+impl<'de, T: Visitor<'de>> DeserializeSeed<'de> for SeqDeserializator<T> {
+    type Value = T::Value;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_seq(ContractVisitor {
-            callback: self.callback,
-        })
+        deserializer.deserialize_seq(self.visitor)
     }
 }
 
-struct ContractVisitor {
-    callback: EventHandler,
-}
-impl<'de> Visitor<'de> for ContractVisitor {
-    type Value = ();
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "ContractVisitor")
-    }
-
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where
-        A: SeqAccess<'de>,
-    {
-        while let Some(contract) = seq.next_element::<ContractConfig>()? {
-            self.callback.process(Event::ContractConfig(contract))
+macro_rules! make_visitors {
+    ($( ($visitor_name: ident, $event_name: ident) ),*) => {
+        $(
+        struct $visitor_name {
+            callback: EventHandler,
         }
+        impl<'de> Visitor<'de> for $visitor_name {
+            type Value = ();
 
-        Ok(())
-    }
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(formatter, "{}", stringify!($visitor_name))
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                while let Some(event) = seq.next_element::<$event_name>()? {
+                    self.callback.process(Event::$event_name(event))
+                }
+
+                Ok(())
+            }
+        }
+        )*
+    };
 }
+make_visitors!(
+    (ContractConfigVisitor, ContractConfig),
+    (CoinConfigVisitor, CoinConfig),
+    (MessageConfigVisitor, MessageConfig)
+);
 
 struct InitialStateDeser {
     callback: EventHandler,
@@ -283,9 +220,9 @@ fn main() {
             .unwrap();
     });
 
-    handle.join().unwrap();
-
     while let Ok(el) = rx.recv() {
         eprintln!("{el:?}")
     }
+
+    handle.join().unwrap();
 }
