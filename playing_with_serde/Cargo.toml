@@ -13,3 +13,4 @@ fuel-core-chain-config = { path = "/home/segfault_magnet/fuel/fuel-core/crates/c
 fuel-core-types = { path = "/home/segfault_magnet/fuel/fuel-core/crates/types" }
 # fuel-tx = { version = "0.37.0", features = ["serde"] }
 serde_json = "1.0.107"
+tokio = { version = "1.32.0", features = ["full", "rt"] }

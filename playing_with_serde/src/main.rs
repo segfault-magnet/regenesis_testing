@@ -7,32 +7,23 @@ use serde::Deserializer;
 use std::fs::File;
 use std::io::BufReader;
 use std::str::FromStr;
+use std::sync::mpsc::SyncSender;
 
 trait ProcessEntry {
-    fn process_chain_name(&self, arg: String);
-    fn process_block_gas_limit(&self, arg: u64);
-    fn process_transaction_parameters(&self, arg: ConsensusParameters);
-    fn process_gas_costs(&self, arg: GasCosts);
-    fn process_consensus(&self, arg: ConsensusConfig);
-
-    fn process_coin(&self, coin: CoinConfig);
-    fn process_contract_config(&self, coin: ContractConfig);
-    fn process_message_config(&self, coin: MessageConfig);
-    fn process_block_height(&self, block_height: BlockHeight);
-
+    fn process(&self, event: Event);
     fn clone_me(&self) -> Box<dyn ProcessEntry>;
 }
 
 struct ChainConfigVisitor {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 struct StateConfigVisitor {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 struct CoinDeser {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 impl<'de> DeserializeSeed<'de> for CoinDeser {
@@ -49,7 +40,7 @@ impl<'de> DeserializeSeed<'de> for CoinDeser {
 }
 
 struct CoinVisitor {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 impl<'de> Visitor<'de> for CoinVisitor {
     type Value = ();
@@ -63,7 +54,7 @@ impl<'de> Visitor<'de> for CoinVisitor {
         A: SeqAccess<'de>,
     {
         while let Some(coin) = seq.next_element::<CoinConfig>()? {
-            self.callback.process_coin(coin);
+            self.callback.process(Event::CoinConfig(coin))
         }
 
         Ok(())
@@ -71,7 +62,7 @@ impl<'de> Visitor<'de> for CoinVisitor {
 }
 
 struct MessageDeser {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 impl<'de> DeserializeSeed<'de> for MessageDeser {
@@ -88,7 +79,7 @@ impl<'de> DeserializeSeed<'de> for MessageDeser {
 }
 
 struct MessageVisitor {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 impl<'de> Visitor<'de> for MessageVisitor {
     type Value = ();
@@ -102,7 +93,7 @@ impl<'de> Visitor<'de> for MessageVisitor {
         A: SeqAccess<'de>,
     {
         while let Some(message) = seq.next_element::<MessageConfig>()? {
-            self.callback.process_message_config(message);
+            self.callback.process(Event::MessageConfig(message))
         }
 
         Ok(())
@@ -123,23 +114,23 @@ impl<'de> Visitor<'de> for StateConfigVisitor {
             match key.as_str() {
                 "coins" => {
                     map.next_value_seed(CoinDeser {
-                        callback: self.callback.clone_me(),
+                        callback: self.callback.clone(),
                     })?;
                 }
                 "contracts" => {
                     map.next_value_seed(ContractDeser {
-                        callback: self.callback.clone_me(),
+                        callback: self.callback.clone(),
                     })?;
                 }
                 "messages" => {
                     map.next_value_seed(MessageDeser {
-                        callback: self.callback.clone_me(),
+                        callback: self.callback.clone(),
                     })?;
                 }
                 "height" => {
                     let height_str = map.next_value::<String>()?;
                     let height = BlockHeight::from_str(&height_str).unwrap();
-                    self.callback.process_block_height(height);
+                    self.callback.process(Event::BlockHeight(height))
                 }
                 _ => {
                     todo!("See about unexpected keys")
@@ -151,7 +142,7 @@ impl<'de> Visitor<'de> for StateConfigVisitor {
 }
 
 struct ContractDeser {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 impl<'de> DeserializeSeed<'de> for ContractDeser {
@@ -168,7 +159,7 @@ impl<'de> DeserializeSeed<'de> for ContractDeser {
 }
 
 struct ContractVisitor {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 impl<'de> Visitor<'de> for ContractVisitor {
     type Value = ();
@@ -182,7 +173,7 @@ impl<'de> Visitor<'de> for ContractVisitor {
         A: SeqAccess<'de>,
     {
         while let Some(contract) = seq.next_element::<ContractConfig>()? {
-            self.callback.process_contract_config(contract);
+            self.callback.process(Event::ContractConfig(contract))
         }
 
         Ok(())
@@ -190,7 +181,7 @@ impl<'de> Visitor<'de> for ContractVisitor {
 }
 
 struct InitialStateDeser {
-    callback: Box<dyn ProcessEntry>,
+    callback: EventHandler,
 }
 
 impl<'de> DeserializeSeed<'de> for InitialStateDeser {
@@ -221,29 +212,29 @@ impl<'de> Visitor<'de> for ChainConfigVisitor {
             match key.as_str() {
                 "chain_name" => {
                     let chain_name = map.next_value().unwrap();
-                    self.callback.process_chain_name(chain_name);
+                    self.callback.process(Event::ChainName(chain_name))
                 }
                 "block_gas_limit" => {
                     let block_gas_limit = map.next_value().unwrap();
-                    self.callback.process_block_gas_limit(block_gas_limit);
+                    self.callback.process(Event::BlockGasLimit(block_gas_limit))
                 }
                 "initial_state" => {
-                    let initial_state = map.next_value_seed(InitialStateDeser {
-                        callback: self.callback.clone_me(),
+                    map.next_value_seed(InitialStateDeser {
+                        callback: self.callback.clone(),
                     })?;
                 }
                 "transaction_parameters" => {
                     let transaction_parameters = map.next_value().unwrap();
                     self.callback
-                        .process_transaction_parameters(transaction_parameters);
+                        .process(Event::ConsensusParameters(transaction_parameters))
                 }
                 "gas_costs" => {
                     let gas_costs = map.next_value().unwrap();
-                    self.callback.process_gas_costs(gas_costs);
+                    self.callback.process(Event::GasCosts(gas_costs))
                 }
                 "consensus" => {
                     let consensus = map.next_value().unwrap();
-                    self.callback.process_consensus(consensus);
+                    self.callback.process(Event::ConsensusConfig(consensus))
                 }
                 unexpected => {
                     eprintln!("Didn't expect key: {unexpected}");
@@ -256,59 +247,45 @@ impl<'de> Visitor<'de> for ChainConfigVisitor {
 }
 
 #[derive(Clone)]
-struct PrintingCallback;
+struct EventHandler {
+    sender: SyncSender<Event>,
+}
 
-impl ProcessEntry for PrintingCallback {
-    fn process_chain_name(&self, arg: String) {
-        // eprintln!("fn process_chain_name(&self, arg:{}) ", arg);
-    }
+#[derive(Debug)]
+enum Event {
+    ChainName(String),
+    BlockGasLimit(u64),
+    ConsensusParameters(ConsensusParameters),
+    GasCosts(GasCosts),
+    ConsensusConfig(ConsensusConfig),
+    CoinConfig(CoinConfig),
+    ContractConfig(ContractConfig),
+    MessageConfig(MessageConfig),
+    BlockHeight(BlockHeight),
+}
 
-    fn process_block_gas_limit(&self, arg: u64) {
-        // eprintln!("fn process_block_gas_limit(&self, arg:{}) ", arg);
-    }
-
-    fn process_transaction_parameters(&self, arg: ConsensusParameters) {
-        // eprintln!("fn process_transaction_parameters(&self, arg:{:?}) ", arg);
-    }
-
-    fn process_gas_costs(&self, arg: GasCosts) {
-        // eprintln!("fn process_gas_costs(&self, arg:{:?}) ", arg);
-    }
-
-    fn process_consensus(&self, arg: ConsensusConfig) {
-        // eprintln!("fn process_consensus(&self, arg:{:?}) ", arg);
-    }
-
-    fn process_coin(&self, coin: CoinConfig) {
-        // eprintln!("fn process_coin(&self, coin:{:?}) ", coin);
-    }
-
-    fn process_contract_config(&self, contract: ContractConfig) {
-        // eprintln!("fn process_contract_config(&self, coin:{:?}) ", contract);
-    }
-
-    fn process_message_config(&self, arg: MessageConfig) {
-        // eprintln!("fn process_message_config(&self, coin:{:?}) ", arg);
-    }
-
-    fn process_block_height(&self, block_height: BlockHeight) {
-        // eprintln!(
-        // "fn process_block_height(&self, block_height:{}) ",
-        // block_height
-        // );
-    }
-
-    fn clone_me(&self) -> Box<dyn ProcessEntry> {
-        Box::new(self.clone())
+impl EventHandler {
+    fn process(&self, event: Event) {
+        self.sender.send(event).unwrap()
     }
 }
 
 fn main() {
     let file = File::open("snapshot.json").unwrap();
     let reader = BufReader::new(file);
-    let callback = Box::new(PrintingCallback {});
+    let (tx, rx) = std::sync::mpsc::sync_channel(100000);
+    let callback = EventHandler { sender: tx };
     let visitor = ChainConfigVisitor { callback };
-    serde_json::Deserializer::from_reader(reader)
-        .deserialize_map(visitor)
-        .unwrap();
+
+    let handle = std::thread::spawn(|| {
+        serde_json::Deserializer::from_reader(reader)
+            .deserialize_map(visitor)
+            .unwrap();
+    });
+
+    handle.join().unwrap();
+
+    while let Ok(el) = rx.recv() {
+        eprintln!("{el:?}")
+    }
 }
