@@ -3,3 +3,5 @@ fuel_db
 Cargo.lock
 **Forc.lock
 snapshot.json
+playing_with_serde/*.json
+**/target

@@ -10,5 +10,6 @@ edition = "2021"
 [dependencies]
 serde = "1.0.188"
 fuel-core-chain-config = { path = "/home/segfault_magnet/fuel/fuel-core/crates/chain-config" }
+fuel-core-types = { path = "/home/segfault_magnet/fuel/fuel-core/crates/types" }
 # fuel-tx = { version = "0.37.0", features = ["serde"] }
 serde_json = "1.0.107"
