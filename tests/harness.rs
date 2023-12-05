@@ -5,7 +5,6 @@ mod tests {
     use std::process::{Command, Stdio};
     use std::time::Duration;
 
-    use fuels::fuel_node::Config;
     use fuels::prelude::setup_program_test;
     use fuels::test_helpers::DbType;
     use fuels::{
@@ -25,9 +24,9 @@ mod tests {
         .unwrap();
 
         let db_path = PathBuf::from("./fuel_db");
-        let snapshot_file = PathBuf::from("./snapshot.json");
+        let snapshot = PathBuf::from("./snapshot");
         std::fs::remove_dir_all(&db_path).ok();
-        std::fs::remove_file(&snapshot_file).ok();
+        std::fs::remove_dir_all(&snapshot).ok();
 
         assert_eq!(
             wallet.address().hash().to_string(),
@@ -51,12 +50,10 @@ mod tests {
                 let mut wallet = wallet.clone();
                 let coins = setup_single_asset_coins(wallet.address(), BASE_ASSET_ID, coins, amount);
                 let config = fuels::test_helpers::Config {
-                    database_type: DbType::RocksDb,
-                    database_path: db_path.clone(),
-                    ..Config::local_node()
+                    database_type: DbType::RocksDb(Some(db_path.clone())),
+                    ..Config::default()
                 };
-                let (provider, _) = setup_test_provider(coins, vec![], Some(config), None).await;
-
+                let provider = setup_test_provider(coins, vec![], Some(config), None).await.unwrap();
                 wallet.set_provider(provider);
 
                 contract.deploy(&wallet, Default::default()).await.unwrap();
@@ -70,7 +67,7 @@ mod tests {
             });
 
         // STEP 2 snapshot the current state
-        let file = File::create(snapshot_file.clone()).unwrap();
+        let file = File::create(snapshot.clone()).unwrap();
         let command_output = Stdio::from(file);
         Command::new("./fuel-core/target/debug/fuel-core")
             .args([
@@ -78,8 +75,6 @@ mod tests {
                 "--db-path",
                 db_path.to_str().unwrap(),
                 "everything",
-                "--chain",
-                "local_testnet",
             ])
             .stdout(command_output)
             .stderr(Stdio::null())
@@ -94,8 +89,8 @@ mod tests {
                 "run",
                 "--db-path",
                 db_path.to_str().unwrap(),
-                "--chain",
-                snapshot_file.to_str().unwrap(),
+                "--genesis-config",
+                snapshot.to_str().unwrap(),
                 "--port",
                 "8081"
             ])

@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-fuels = "0.48.0"
+fuels = "0.53.0"
 tokio = { version = "1.32.0", features = ["full"] }
