@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-fuels = "0.53.0"
+fuels = { git = "https://github.com/FuelLabs/fuels-rs", branch = "feature/regenesis" }
 tokio = { version = "1.32.0", features = ["full"] }

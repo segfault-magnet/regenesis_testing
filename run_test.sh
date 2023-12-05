@@ -8,8 +8,8 @@ fi
 
 echo "Building fuel-core"
 (cd fuel-core && cargo xtask build)
-echo "Building forc"
-(cd some_contract && forc build)
+#echo "Building forc"
+#(cd some_contract && forc build)
 echo "Running tests"
 PATH="./fuel-core/target/debug/:$PATH"
 exec cargo test -- --nocapture

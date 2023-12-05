@@ -33,11 +33,16 @@ mod tests {
             "5349930da01b2b94e137c035a499ceff4314e0259f0552ec9e2b5156d8007958"
         );
 
-        setup_program_test!(
-            Abigen(Contract(name = "MyContract", project = "./some_contract")),
-        );
+        setup_program_test!(Abigen(Contract(
+            name = "MyContract",
+            project = "./some_contract"
+        )),);
 
-        let contract = Contract::load_from("./some_contract/out/debug/some_contract.bin", Default::default()).unwrap();
+        let contract = Contract::load_from(
+            "./some_contract/out/debug/some_contract.bin",
+            Default::default(),
+        )
+        .unwrap();
         let contract_id = contract.contract_id();
 
         let amount = 100_000;
@@ -48,12 +53,15 @@ mod tests {
             .expect("Tokio runtime failed")
             .block_on(async {
                 let mut wallet = wallet.clone();
-                let coins = setup_single_asset_coins(wallet.address(), BASE_ASSET_ID, coins, amount);
+                let coins =
+                    setup_single_asset_coins(wallet.address(), BASE_ASSET_ID, coins, amount);
                 let config = fuels::test_helpers::Config {
                     database_type: DbType::RocksDb(Some(db_path.clone())),
                     ..Config::default()
                 };
-                let provider = setup_test_provider(coins, vec![], Some(config), None).await.unwrap();
+                let provider = setup_test_provider(coins, vec![], Some(config), None)
+                    .await
+                    .unwrap();
                 wallet.set_provider(provider);
 
                 contract.deploy(&wallet, Default::default()).await.unwrap();
@@ -67,19 +75,24 @@ mod tests {
             });
 
         // STEP 2 snapshot the current state
-        let file = File::create(snapshot.clone()).unwrap();
-        let command_output = Stdio::from(file);
-        Command::new("./fuel-core/target/debug/fuel-core")
-            .args([
-                "snapshot",
-                "--db-path",
-                db_path.to_str().unwrap(),
-                "everything",
-            ])
-            .stdout(command_output)
-            .stderr(Stdio::null())
-            .status()
-            .unwrap();
+        assert!(
+            Command::new("./fuel-core/target/debug/fuel-core")
+                .args([
+                    "snapshot",
+                    "--db-path",
+                    db_path.to_str().unwrap(),
+                    "everything",
+                    "--output-directory",
+                    snapshot.as_os_str().to_str().unwrap(),
+                    "--state-encoding-format",
+                    "json"
+                ])
+                .stdout(Stdio::null())
+                .status()
+                .unwrap()
+                .success(),
+            "Failed to generate snapshot"
+        );
 
         // STEP 3 regenesis
         std::fs::remove_dir_all(&db_path).ok();
@@ -92,31 +105,33 @@ mod tests {
                 "--genesis-config",
                 snapshot.to_str().unwrap(),
                 "--port",
-                "8081"
+                "8081",
             ])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
             .spawn()
             .unwrap();
+        // .stdout(Stdio::null())
+        // .stderr(Stdio::null())
 
-            std::thread::sleep(Duration::from_secs(2));
+        std::thread::sleep(Duration::from_secs(2));
 
-            tokio::runtime::Runtime::new()
+        tokio::runtime::Runtime::new()
             .expect("Tokio runtime failed")
             .block_on(async {
                 let mut wallet = wallet.clone();
                 let provider = Provider::connect("127.0.0.1:8081").await.unwrap();
                 wallet.set_provider(provider);
 
-                assert_eq!(wallet.get_asset_balance(&BASE_ASSET_ID).await.unwrap(), amount * coins);
+                assert_eq!(
+                    wallet.get_asset_balance(&BASE_ASSET_ID).await.unwrap(),
+                    amount * coins
+                );
 
                 let contract_instance = MyContract::new(contract_id, wallet);
                 let methods = contract_instance.methods();
                 let regenesis_counter = methods.get_counter().call().await.unwrap().value;
 
                 assert_eq!(counter, regenesis_counter);
-            }
-        );
+            });
 
         child.kill().unwrap();
     }
