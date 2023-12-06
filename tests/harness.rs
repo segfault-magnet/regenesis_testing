@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
     use std::path::PathBuf;
     use std::process::{Command, Stdio};
     use std::time::Duration;
@@ -85,7 +84,7 @@ mod tests {
                     "--output-directory",
                     snapshot.as_os_str().to_str().unwrap(),
                     "--state-encoding-format",
-                    "json"
+                    "parquet"
                 ])
                 .stdout(Stdio::null())
                 .status()
