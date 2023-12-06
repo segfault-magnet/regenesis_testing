@@ -1,4 +1,5 @@
-#!/usr/bin/env bash -e
+#!/usr/bin/env bash
+set -e
 num_files="$(find fuel-core | wc -l | tr -d '[[:space:]]')"
 
 if [[ $num_files == "1" ]]; then
