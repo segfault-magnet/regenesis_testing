@@ -45,15 +45,20 @@ mod tests {
         let contract_id = contract.contract_id();
 
         let amount = 100_000;
-        let coins = 10;
+        let num_coins = 10;
         let counter = 10;
+        let x = 14;
+        let alt_asset_id = AssetId::from([1; 32]);
 
         tokio::runtime::Runtime::new()
             .expect("Tokio runtime failed")
             .block_on(async {
                 let mut wallet = wallet.clone();
-                let coins =
-                    setup_single_asset_coins(wallet.address(), BASE_ASSET_ID, coins, amount);
+                let mut coins =
+                    setup_single_asset_coins(wallet.address(), BASE_ASSET_ID, num_coins, amount);
+                let alt_coins =
+                    setup_single_asset_coins(wallet.address(), alt_asset_id, num_coins, amount);
+                coins.extend(alt_coins);
                 let config = fuels::test_helpers::Config {
                     database_type: DbType::RocksDb(Some(db_path.clone())),
                     ..Config::default()
@@ -64,13 +69,22 @@ mod tests {
                 wallet.set_provider(provider);
 
                 contract.deploy(&wallet, Default::default()).await.unwrap();
-                let contract_instance = MyContract::new(contract_id, wallet);
+                let contract_instance = MyContract::new(contract_id, wallet.clone());
 
                 let methods = contract_instance.methods();
                 methods.initialize_counter(counter).call().await.unwrap();
+                methods.init_x(14).call().await.unwrap();
 
                 let stored_value = methods.get_counter().call().await.unwrap().value;
                 assert_eq!(stored_value, 10);
+                let stored_x = methods.get_x().call().await.unwrap().value;
+                assert_eq!(stored_x, x);
+
+                // add balances to the contracts
+                let contract_id = Bech32ContractId::from(contract_id);
+                wallet.force_transfer_to_contract(&contract_id, 10000, BASE_ASSET_ID, TxPolicies::default()).await.unwrap();
+                wallet.force_transfer_to_contract(&contract_id, 10000, BASE_ASSET_ID, TxPolicies::default()).await.unwrap();
+                wallet.force_transfer_to_contract(&contract_id, 10000, alt_asset_id, TxPolicies::default()).await.unwrap();            
             });
 
         // STEP 2 snapshot the current state
@@ -84,7 +98,7 @@ mod tests {
                     "--output-directory",
                     snapshot.as_os_str().to_str().unwrap(),
                     "--state-encoding-format",
-                    "parquet"
+                    "json"
                 ])
                 .stdout(Stdio::null())
                 .status()
@@ -118,18 +132,30 @@ mod tests {
             .block_on(async {
                 let mut wallet = wallet.clone();
                 let provider = Provider::connect("127.0.0.1:8081").await.unwrap();
-                wallet.set_provider(provider);
+                wallet.set_provider(provider.clone());
 
                 assert_eq!(
                     wallet.get_asset_balance(&BASE_ASSET_ID).await.unwrap(),
-                    amount * coins
+                    amount * num_coins - 20000
+                );
+
+                assert_eq!(
+                    provider.get_contract_asset_balance(&Bech32ContractId::from(contract_id), BASE_ASSET_ID).await.unwrap(),
+                    20000
+                );
+
+                assert_eq!(
+                    provider.get_contract_asset_balance(&Bech32ContractId::from(contract_id), alt_asset_id).await.unwrap(),
+                    10000
                 );
 
                 let contract_instance = MyContract::new(contract_id, wallet);
                 let methods = contract_instance.methods();
                 let regenesis_counter = methods.get_counter().call().await.unwrap().value;
+                let regenesis_x = methods.get_x().call().await.unwrap().value;
 
                 assert_eq!(counter, regenesis_counter);
+                assert_eq!(x, regenesis_x);
             });
 
         child.kill().unwrap();
